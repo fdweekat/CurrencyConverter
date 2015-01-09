@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,17 +34,24 @@ public class MainFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (savedInstanceState != null) {
-            _converterIds = savedInstanceState.getStringArrayList(ARRAY_LIST_KEY);
+        _converterIds = new ArrayList<String>();
+        _context = container.getContext();
+
+        Cursor cursor = _context.getContentResolver().
+                query(CurrencyConverterContentProvider.CONTENT_URI, null, CurrencyConverterContentProvider.VISIBLE + "= 1", null, null);
+
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                _converterIds.add(cursor.getString(cursor.getColumnIndex(CurrencyConverterContentProvider.CONVERTER_ID)));
+            }
         }
 
-        if (_converterIds == null) {
-            _converterIds = new ArrayList<String>();
-        }
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            String deleteid = bundle.getString("delete");
-            _converterIds.remove(deleteid);
+        if (_converterIds.isEmpty()) {
+            Intent intent = new Intent(_context, ChooseActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            _context.startActivity(intent);
+            return null;
         }
 
         View view = inflater.inflate(R.layout.fragment_main, container, false);
@@ -99,18 +107,6 @@ public class MainFragment extends Fragment {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    public void addConvertAdd(String converterId) {
-        if (_converterIds == null ){
-            _converterIds = new ArrayList<String>();
-        }
-        _converterIds.add(converterId);
-
-        if (_listview != null) {
-            _adapter.notifyDataSetChanged();
-            _listview.requestLayout();
-        }
     }
 
     public void setContext(Context _context) {

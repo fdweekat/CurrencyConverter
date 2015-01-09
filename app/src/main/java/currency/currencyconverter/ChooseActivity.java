@@ -1,6 +1,7 @@
 package currency.currencyconverter;
 
 import android.app.Activity;
+import android.app.FragmentTransaction;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
@@ -54,7 +55,8 @@ public class ChooseActivity extends Activity {
         toCurrencySpiner = (Spinner) findViewById(R.id.toCurrency);
         fromCurrencySpiner = (Spinner) findViewById(R.id.fromCurrency);
         if (currencys.isEmpty()) {
-            new Request().execute("");
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(R.id.container, new splashFragment());
         } else {
             ArrayAdapter<Currency> currencyArrayAdapter = new ArrayAdapter<Currency>(getBaseContext(),
                     android.R.layout.simple_spinner_item, currencys);
@@ -72,10 +74,9 @@ public class ChooseActivity extends Activity {
         new CurrencyConverterRequest(this, new CurrencyConverterRequest.Callback() {
             @Override
             public void callback(double value) {
-                Intent intent = new Intent();
-                intent.putExtra(INTENT_RESULT, converterId);
-                setResult(RESULT_OK, intent);
-                finish();
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
             }
         }).execute(from.getId(), to.getId());
 
@@ -104,61 +105,5 @@ public class ChooseActivity extends Activity {
 //        return super.onOptionsItemSelected(item);
 //    }
 
-    class Request extends AsyncTask<String, String, String> {
 
-        @Override
-        protected String doInBackground(String... strings) {
-            HttpClient httpClient = new DefaultHttpClient();
-            try {
-                HttpResponse response = httpClient.execute(new HttpGet("http://www.freecurrencyconverterapi.com/api/v2/countries"));
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    response.getEntity().writeTo(outputStream);
-                    outputStream.close();
-                    String responseJsonString = outputStream.toString();
-
-                    JSONObject jsonObject = new JSONObject(responseJsonString);
-                    SQLiteDatabase database = _currencyIDsSqliteTable.getWritableDatabase();
-                    String insearStatment = "INSERT OR REPLACE INTO '" + CurrencyIDsSqliteTable.TABLE_NAME +
-                            "' ('"+CurrencyIDsSqliteTable.CURRENCY_ID +"','" + CurrencyIDsSqliteTable.CURRENCY_NAME+"')" + "VALUES";
-
-                    JSONObject results = jsonObject.getJSONObject("results");
-                    Iterator<String> iterator = results.keys();
-                    currencys.clear();
-                    while (iterator.hasNext()) {
-                        String key = iterator.next();
-                        JSONObject currencyJson = results.getJSONObject(key);
-                        Currency currency = new Currency(currencyJson.getString("currencyId"),
-                                currencyJson.getString("currencyName"));
-                        currencys.add(currency);
-
-                        ContentValues contentValues = new ContentValues();
-                        contentValues.put(CurrencyIDsSqliteTable.CURRENCY_NAME, currency.getName());
-                        contentValues.put(CurrencyIDsSqliteTable.CURRENCY_ID, currency.getId());
-                        database.insertWithOnConflict(CurrencyIDsSqliteTable.TABLE_NAME, null,
-                                contentValues, SQLiteDatabase.CONFLICT_IGNORE);
-                    }
-
-/*
-                    database.execSQL(insearStatment);
-*/
-
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return "";
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            ArrayAdapter<Currency> currencyArrayAdapter = new ArrayAdapter<Currency>(getBaseContext(), android.R.layout.simple_spinner_item, currencys);
-            toCurrencySpiner.setAdapter(currencyArrayAdapter);
-            fromCurrencySpiner.setAdapter(currencyArrayAdapter);
-        }
-    }
 }

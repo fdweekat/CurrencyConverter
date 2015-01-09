@@ -16,25 +16,15 @@ import android.os.Build;
 
 public class MainActivity extends Activity {
 
-    MainFragment mainFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_activity2);
         if (savedInstanceState == null) {
-            mainFragment = new MainFragment();
+
             getFragmentManager().beginTransaction()
-                    .add(R.id.container, mainFragment)
+                    .add(R.id.container, new splashFragment())
                     .commit();
-
-
-            Cursor cursor = getContentResolver().query(CurrencyConverterContentProvider.CONTENT_URI, null, CurrencyConverterContentProvider.VISIBLE + "= 1", null, null);
-
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    mainFragment.addConvertAdd(cursor.getString(cursor.getColumnIndex(CurrencyConverterContentProvider.CONVERTER_ID)));
-                }
-            }
         }
     }
 
@@ -68,11 +58,4 @@ public class MainActivity extends Activity {
 
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 0 && resultCode == Activity.RESULT_OK) {
-            String converterId = data.getStringExtra(ChooseActivity.INTENT_RESULT);
-            mainFragment.addConvertAdd(converterId);
-        }
-    }
 }
