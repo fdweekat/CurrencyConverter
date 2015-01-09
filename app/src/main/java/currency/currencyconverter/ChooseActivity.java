@@ -2,28 +2,15 @@ package currency.currencyconverter;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -34,6 +21,8 @@ public class ChooseActivity extends Activity {
     private Spinner fromCurrencySpiner;
     private Spinner toCurrencySpiner;
     public static final String INTENT_RESULT = "currencyConverterID";
+    private int _usd;
+    private int _eur;
 
 
     @Override
@@ -46,14 +35,33 @@ public class ChooseActivity extends Activity {
         SQLiteDatabase database = _currencyIDsSqliteTable.getReadableDatabase();
         Cursor cursor = database.query(CurrencyIDsSqliteTable.TABLE_NAME, null, null, null, null, null, CurrencyIDsSqliteTable.CURRENCY_NAME + " ASC");
         currencys = new ArrayList<Currency>();
+
         while (cursor.moveToNext()) {
             String id = cursor.getString(cursor.getColumnIndex(CurrencyIDsSqliteTable.CURRENCY_ID));
             String currncyName = cursor.getString(cursor.getColumnIndex(CurrencyIDsSqliteTable.CURRENCY_NAME));
+            if(id.equalsIgnoreCase("usd")) {
+                _usd = currencys.size();
+            } else if (id.equalsIgnoreCase("EUR")) {
+                _eur = currencys.size();
+            }
             currencys.add(new Currency(id, currncyName));
         }
 
         toCurrencySpiner = (Spinner) findViewById(R.id.toCurrency);
+        toCurrencySpiner.post(new Runnable() {
+            @Override
+            public void run() {
+                toCurrencySpiner.setSelection(_eur);
+            }
+        });
+
         fromCurrencySpiner = (Spinner) findViewById(R.id.fromCurrency);
+        fromCurrencySpiner.post(new Runnable() {
+            @Override
+            public void run() {
+                fromCurrencySpiner.setSelection(_usd);
+            }
+        });
         if (currencys.isEmpty()) {
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
             transaction.replace(R.id.container, new MainFragment());
