@@ -5,6 +5,7 @@ import android.app.FragmentTransaction;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
@@ -13,7 +14,6 @@ import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -26,8 +26,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
-
-
+import android.os.Handler;
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -35,6 +34,8 @@ public class splashFragment extends Fragment {
 
     private CurrencyIDsSqliteTable _currencyIDsSqliteTable;
     private Context _context;
+    private boolean _dateReady = false;
+    private boolean _hidden;
 
     public splashFragment() {
         // Required empty public constructor
@@ -44,9 +45,17 @@ public class splashFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        _hidden = false;
         _context = container.getContext();
+        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_splash, container, false);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        _hidden = true;
     }
 
     @Override
@@ -56,10 +65,18 @@ public class splashFragment extends Fragment {
         SQLiteDatabase database = _currencyIDsSqliteTable.getReadableDatabase();
         Cursor cursor = database.query(CurrencyIDsSqliteTable.TABLE_NAME, null, null, null, null, null, CurrencyIDsSqliteTable.CURRENCY_NAME + " ASC");
         if (cursor.getCount() > 0) {
-            loadNextView();
+            _dateReady = true;
         } else {
             new Request().execute();
         }
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                while (!_dateReady);
+                loadNextView();
+            }
+        }, 4000);
     }
 
     class Request extends AsyncTask<String, String, String> {
@@ -112,12 +129,21 @@ public class splashFragment extends Fragment {
 
         @Override
         protected void onPostExecute(String s) {
-            loadNextView();
+            _dateReady = true;
         }
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        _hidden = true;
+    }
 
     private void loadNextView() {
+
+        if (_hidden) {
+            return;
+        }
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         Cursor cursor = _context.getContentResolver().
                 query(CurrencyConverterContentProvider.CONTENT_URI, null, CurrencyConverterContentProvider.VISIBLE + "= 1", null, null);

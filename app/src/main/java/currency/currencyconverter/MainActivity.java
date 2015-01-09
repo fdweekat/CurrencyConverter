@@ -20,11 +20,19 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_activity2);
+        Intent intent = getIntent();
+        String fragmentName = intent.getStringExtra("fragment");
         if (savedInstanceState == null) {
 
-            getFragmentManager().beginTransaction()
-                    .add(R.id.container, new splashFragment())
-                    .commit();
+            if(MainFragment.class.getName().equalsIgnoreCase(fragmentName)){
+                getFragmentManager().beginTransaction()
+                        .add(R.id.container, new MainFragment())
+                        .commit();
+            } else {
+                getFragmentManager().beginTransaction()
+                        .add(R.id.container, new splashFragment())
+                        .commit();
+            }
         }
     }
 

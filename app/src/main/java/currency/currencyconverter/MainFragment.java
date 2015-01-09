@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -36,7 +37,7 @@ public class MainFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         _converterIds = new ArrayList<String>();
         _context = container.getContext();
-
+        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         Cursor cursor = _context.getContentResolver().
                 query(CurrencyConverterContentProvider.CONTENT_URI, null, CurrencyConverterContentProvider.VISIBLE + "= 1", null, null);
 

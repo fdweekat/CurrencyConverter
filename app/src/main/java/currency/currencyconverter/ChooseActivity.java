@@ -56,7 +56,7 @@ public class ChooseActivity extends Activity {
         fromCurrencySpiner = (Spinner) findViewById(R.id.fromCurrency);
         if (currencys.isEmpty()) {
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            transaction.replace(R.id.container, new splashFragment());
+            transaction.replace(R.id.container, new MainFragment());
         } else {
             ArrayAdapter<Currency> currencyArrayAdapter = new ArrayAdapter<Currency>(getBaseContext(),
                     android.R.layout.simple_spinner_item, currencys);
@@ -76,6 +76,7 @@ public class ChooseActivity extends Activity {
             public void callback(double value) {
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                intent.putExtra("fragment", MainFragment.class.getName());
                 startActivity(intent);
             }
         }).execute(from.getId(), to.getId());

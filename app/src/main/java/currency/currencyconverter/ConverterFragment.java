@@ -3,6 +3,7 @@ package currency.currencyconverter;
 
 import android.app.Fragment;
 import android.content.ContentValues;
+import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -31,6 +32,7 @@ public class ConverterFragment extends Fragment {
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.converter_fragment, container, false);
+        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         Bundle bundle = getArguments();
         if(bundle ==null) {
             return null;
