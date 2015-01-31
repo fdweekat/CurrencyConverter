@@ -1,13 +1,13 @@
 package currency.currencyconverter;
 
-import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,11 +18,11 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+
 
 
 public class MainFragment extends Fragment {
+    private static final String LOG_TAG = MainFragment.class.getName();
     private ArrayList<String> _converterIds;
     private static final String ARRAY_LIST_KEY = "converter_ids";
     private ListView _listview;
@@ -37,7 +37,7 @@ public class MainFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         setHasOptionsMenu(true);
-        _converterIds = new ArrayList<String>();
+        _converterIds = new ArrayList<String>(30);
         _context = container.getContext();
         getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         Cursor cursor = _context.getContentResolver().
@@ -61,7 +61,7 @@ public class MainFragment extends Fragment {
         _listview = (ListView) view.findViewById(R.id.listView);
         _adapter = new ConverterCurrencyListAdapter(getActivity(), _converterIds);
         _listview.setAdapter(_adapter);
-
+        final int id = getId();
         _listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -69,9 +69,15 @@ public class MainFragment extends Fragment {
                 Fragment fragment = new ConverterFragment();
                 fragment.setArguments(bundle);
                 bundle.putString("converterid", (String) adapterView.getAdapter().getItem(i));
-                getFragmentManager().beginTransaction().replace(R.id.container,
-                        fragment)
-                .addToBackStack("Back").commit();
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                if (getResources().getBoolean(R.bool.is_tablet)) {
+                    fragmentTransaction.replace(R.id.converterFragment, fragment);
+                    Log.d(LOG_TAG, "screen size is large");
+                } else {
+                    fragmentTransaction.replace(R.id.container, fragment);
+                    Log.d(LOG_TAG, "screen size is normal");
+                }
+                fragmentTransaction.addToBackStack("Back").commit();
 
             }
         });
@@ -81,11 +87,13 @@ public class MainFragment extends Fragment {
         return view;
     }
 
-
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
+    public void onStart() {
+        super.onStart();
+        if (getResources().getBoolean(R.bool.is_tablet)) {
+            View converterFragment = getView().getRootView().findViewById(R.id.converterFragment);
+            converterFragment.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

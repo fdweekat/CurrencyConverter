@@ -48,7 +48,6 @@ public class splashFragment extends Fragment {
         _hidden = false;
         _context = container.getContext();
         getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_splash, container, false);
     }
 
@@ -61,6 +60,10 @@ public class splashFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        if (getResources().getBoolean(R.bool.is_tablet)) {
+            View converterFragment = getView().getRootView().findViewById(R.id.converterFragment);
+            converterFragment.setVisibility(View.GONE);
+        }
         _currencyIDsSqliteTable = new CurrencyIDsSqliteTable(_context);
         SQLiteDatabase database = _currencyIDsSqliteTable.getReadableDatabase();
         Cursor cursor = database.query(CurrencyIDsSqliteTable.TABLE_NAME, null, null, null, null, null, CurrencyIDsSqliteTable.CURRENCY_NAME + " ASC");
@@ -140,7 +143,6 @@ public class splashFragment extends Fragment {
     }
 
     private void loadNextView() {
-
         if (_hidden) {
             return;
         }
