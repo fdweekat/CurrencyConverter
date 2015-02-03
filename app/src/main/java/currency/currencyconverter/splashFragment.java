@@ -1,6 +1,7 @@
 package currency.currencyconverter;
 
 
+import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,12 +9,16 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -26,12 +31,12 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
-import android.os.Handler;
+
 /**
  * A simple {@link Fragment} subclass.
  */
 public class splashFragment extends Fragment {
-
+    private static final String LOG_TAG = splashFragment.class.getName();
     private CurrencyIDsSqliteTable _currencyIDsSqliteTable;
     private Context _context;
     private boolean _dateReady = false;
@@ -118,6 +123,9 @@ public class splashFragment extends Fragment {
                     database.execSQL(insearStatment);
 */
 
+                }else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_GATEWAY_TIMEOUT) {
+                    Log.d(LOG_TAG, "HTTP request time out");
+                    showMessage();
                 }
 
             } catch (IOException e) {
@@ -133,6 +141,27 @@ public class splashFragment extends Fragment {
         @Override
         protected void onPostExecute(String s) {
             _dateReady = true;
+        }
+
+        private boolean isConnect() {
+            ConnectivityManager cm = (ConnectivityManager) _context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            if (null != activeNetwork) {
+                if(activeNetwork.getType() == ConnectivityManager.TYPE_WIFI || activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE)
+                    return true;
+            }
+            return false;
+        }
+
+        private void showMessage() {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast toast = Toast.makeText(_context, "No Intrnet Connection", Toast.LENGTH_LONG);
+                    toast.show();
+                }
+            });
         }
     }
 

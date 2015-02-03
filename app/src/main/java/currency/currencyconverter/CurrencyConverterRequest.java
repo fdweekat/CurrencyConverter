@@ -1,11 +1,16 @@
 package currency.currencyconverter;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -23,6 +28,7 @@ import java.util.Iterator;
 
 public class CurrencyConverterRequest extends AsyncTask<String, Double, Double> {
 
+    private static final String LOG_TAG = CurrencyConverterRequest.class.getName();
     private Context _context;
     private CurrencyIDsSqliteTable _currencyIDsSqliteTable;
     private Callback _callback;
@@ -33,8 +39,13 @@ public class CurrencyConverterRequest extends AsyncTask<String, Double, Double> 
         _currencyIDsSqliteTable = new CurrencyIDsSqliteTable(_context);
 
     }
+
     @Override
     protected Double doInBackground(String... strings) {
+        if (!isConnect()) {
+            showMessage();
+            return null;
+        }
         HttpClient httpClient = new DefaultHttpClient();
         HttpResponse response = null;
         if (strings.length < 2) {
@@ -63,7 +74,9 @@ public class CurrencyConverterRequest extends AsyncTask<String, Double, Double> 
                     insertIntoDatabase(value, fromCurrmencyID, toCurrmencyID);
                     return value;
                 }
-
+            } else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_GATEWAY_TIMEOUT) {
+                Log.d(LOG_TAG, "HTTP request time out");
+                showMessage();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -113,6 +126,28 @@ public class CurrencyConverterRequest extends AsyncTask<String, Double, Double> 
             return null;
         }
 
+    }
+
+    private boolean isConnect() {
+        ConnectivityManager cm = (ConnectivityManager) _context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (null != activeNetwork) {
+            if(activeNetwork.getType() == ConnectivityManager.TYPE_WIFI || activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE)
+                return true;
+        }
+        Log.w(LOG_TAG, "No internet connection");
+        return false;
+    }
+
+    private void showMessage() {
+        ((Activity) _context).runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast toast = Toast.makeText(_context, "No Internet Connection", Toast.LENGTH_LONG);
+                toast.show();
+            }
+        });
     }
 
     public interface Callback {
